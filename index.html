@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>독서토론 노트</title>
+  <style>
+    :root { --ink: #182321; --muted: #6d7873; --line: #dce5df; --paper: #f7f8f4; --panel: #ffffff; --mint: #ccefdc; --mint-strong: #34785e; --coral: #e97962; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: "Noto Sans KR", "Malgun Gothic", sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .page { width: min(1220px, 100%); margin: auto; padding: 28px 30px 64px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 16px; color: var(--muted); font-size: 12px; letter-spacing: .12em; }
+    .brand { color: var(--ink); font-weight: 900; letter-spacing: -.03em; font-size: 17px; }
+    header { display: flex; justify-content: space-between; align-items: end; gap: 24px; padding: 56px 0 34px; }
+    h1 { margin: 0; max-width: 650px; font-size: clamp(42px, 7vw, 82px); line-height: .98; letter-spacing: -.09em; }
+    h1 span { color: var(--mint-strong); }
+    .intro { max-width: 270px; margin: 0; color: var(--muted); line-height: 1.7; font-size: 14px; }
+    .workspace { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+    .teams { padding: 20px; }
+    .panel-title { display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px; font-size: 14px; }
+    .panel-title small { color: var(--muted); font-size: 11px; font-weight: 400; }
+    .team-list { display: grid; gap: 8px; }
+    .team-button { display: flex; align-items: center; gap: 10px; width: 100%; border: 1px solid transparent; background: transparent; border-radius: 4px; padding: 12px 10px; color: var(--ink); text-align: left; }
+    .team-button:hover, .team-button.active { background: #eef8f1; border-color: #bfe2cc; }
+    .team-badge { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--mint); color: var(--mint-strong); font-weight: 900; }
+    .team-button strong { font-size: 14px; }
+    .team-button small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .note { margin: 24px 0 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .discussion { min-width: 0; }
+    .discussion-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .discussion-head h2 { margin: 0; font-size: 21px; letter-spacing: -.06em; }
+    .status { color: var(--muted); font-size: 12px; }
+    .speakers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .speaker { position: relative; min-height: 112px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 16px 12px; color: var(--ink); text-align: left; transition: .16s ease; }
+    .speaker:hover { border-color: var(--mint-strong); transform: translateY(-2px); }
+    .speaker.selected { border: 2px solid var(--mint-strong); background: #effaf3; padding: 15px 11px; }
+    .speaker .number { color: var(--muted); font-size: 11px; }
+    .speaker-name { display: block; width: 100%; margin-top: 11px; border: 0; border-bottom: 1px solid transparent; background: transparent; padding: 2px 0; color: var(--ink); font-size: 17px; font-weight: 800; outline: none; }
+    .speaker-name:focus { border-bottom-color: var(--mint-strong); }
+    .speaker.selected .speaker-name { color: var(--mint-strong); }
+    .speaker.selected .speaker-name::after { content: "  발언 중"; }
+    .notes { margin-top: 22px; padding: 22px; }
+    .notes-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: 800; }
+    .selected-name { color: var(--mint-strong); }
+    textarea { display: block; width: 100%; min-height: 270px; resize: vertical; border: 1px solid var(--line); border-radius: 4px; background: #fbfcfa; padding: 16px; color: var(--ink); line-height: 1.8; outline: none; }
+    textarea:focus { border-color: var(--mint-strong); box-shadow: 0 0 0 3px #e4f5ea; }
+    .voice-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 14px; }
+    .voice-button { display: inline-flex; align-items: center; gap: 9px; border: 0; border-radius: 4px; background: var(--ink); color: white; padding: 13px 18px; font-weight: 800; }
+    .voice-button:hover { background: var(--mint-strong); }
+    .voice-button.listening { background: var(--coral); }
+    .voice-button:disabled { cursor: not-allowed; opacity: .45; }
+    .mic { width: 10px; height: 14px; border: 2px solid currentColor; border-radius: 7px; }
+    .mic::after { content: ""; display: block; width: 12px; height: 7px; margin: 10px 0 0 -3px; border: 2px solid currentColor; border-top: 0; border-radius: 0 0 9px 9px; }
+    .voice-help { color: var(--muted); font-size: 12px; line-height: 1.5; text-align: right; }
+    .topic-selector { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 24px; }
+    .topic-button { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); padding: 11px 16px; color: var(--ink); font-size: 13px; font-weight: 800; }
+    .topic-button:hover, .topic-button.active { border-color: var(--mint-strong); background: #eef8f1; color: var(--mint-strong); }
+    .view-switcher { display: flex; gap: 8px; margin: 24px 0 0; }
+    .view-tab, .action-button { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); padding: 10px 14px; color: var(--ink); font-size: 12px; font-weight: 800; }
+    .view-tab:hover, .view-tab.active, .action-button:hover { border-color: var(--mint-strong); background: #eef8f1; }
+    .view { margin-top: 34px; }
+    .view[hidden] { display: none; }
+    .view-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 18px; }
+    .view-heading h2 { margin: 0; font-size: 28px; letter-spacing: -.07em; }
+    .view-heading p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .teacher-lock { max-width: 520px; margin: 70px auto; padding: 32px; text-align: center; }
+    .teacher-lock h2 { margin: 0 0 10px; font-size: 28px; letter-spacing: -.07em; }
+    .teacher-lock p { margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .password-row { display: flex; gap: 8px; }
+    .password-input { min-width: 0; flex: 1; border: 1px solid var(--line); border-radius: 4px; padding: 11px 12px; outline: none; }
+    .password-input:focus { border-color: var(--mint-strong); box-shadow: 0 0 0 3px #e4f5ea; }
+    .lock-error { min-height: 18px; margin: 12px 0 0; color: #b45343; font-size: 12px; }
+    .teacher-content[hidden] { display: none; }
+    .table-wrap { overflow-x: auto; }
+    .teacher-table { width: 100%; border-collapse: collapse; background: var(--panel); font-size: 13px; }
+    .teacher-table th, .teacher-table td { border-bottom: 1px solid var(--line); padding: 14px 16px; text-align: left; vertical-align: top; }
+    .teacher-table th { background: #eef8f1; color: var(--muted); font-size: 11px; letter-spacing: .08em; }
+    .teacher-table td:first-child, .teacher-table td:nth-child(2) { white-space: nowrap; font-weight: 800; }
+    .teacher-table td:last-child { min-width: 360px; white-space: pre-wrap; line-height: 1.7; }
+    .empty-note { color: var(--muted); }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .summary-card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px; }
+    .summary-card h3 { display: flex; justify-content: space-between; margin: 0 0 16px; font-size: 20px; }
+    .summary-card h3 small { color: var(--muted); font-size: 11px; font-weight: 400; }
+    .summary-speaker { padding: 12px 0; border-top: 1px solid var(--line); }
+    .summary-speaker strong { display: block; margin-bottom: 5px; color: var(--mint-strong); }
+    .summary-speaker p { margin: 0; line-height: 1.7; font-size: 14px; white-space: pre-wrap; }
+    .presentation-team-selector { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .presentation-team-button { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); padding: 12px 18px; color: var(--ink); font-weight: 800; }
+    .presentation-team-button:hover, .presentation-team-button.active { border-color: var(--mint-strong); background: var(--mint); color: var(--mint-strong); }
+    .presentation-team-label { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+    .summary-grid.single { grid-template-columns: minmax(0, 1fr); }
+    .summary-grid.single .summary-card { min-height: 420px; padding: 32px; }
+    .summary-grid.single .summary-card h3 { font-size: 32px; }
+    .summary-grid.single .summary-speaker { padding: 20px 0; }
+    .summary-grid.single .summary-speaker strong { font-size: 19px; }
+    .summary-grid.single .summary-speaker p { font-size: 18px; line-height: 1.9; }
+    @media print { .topbar, .view-switcher, header, #input-view, .view-heading button { display: none !important; } .page { width: 100%; padding: 0; } #presentation-view { display: block !important; } .summary-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 760px) { .page { padding: 20px 16px 40px; } header { display: block; padding: 40px 0 26px; } .intro { margin-top: 20px; } .workspace { grid-template-columns: 1fr; } .speakers { grid-template-columns: repeat(2, 1fr); } .voice-row { align-items: flex-start; flex-direction: column; } .voice-help { text-align: left; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topbar"><span class="brand">READING CIRCLE / NOTE</span><span>토론 기록장 · 2026</span></div>
+    <nav class="view-switcher" aria-label="화면 선택"><button class="view-tab active" data-view="input-view" type="button">토론 기록</button><button class="view-tab" data-view="teacher-view" type="button">교사용 기록표</button><button class="view-tab" data-view="presentation-view" type="button">발표 자료</button></nav>
+    <section id="input-view" class="view">
+      <header><h1>말한 사람을 고르고,<br><span>기록은 자연스럽게.</span></h1><p class="intro">팀을 선택한 뒤 발언자의 이름을 눌러주세요. 마이크 버튼을 켜고 말하면 토론 내용이 바로 노트에 쌓입니다.</p></header>
+    <div class="topic-selector" id="topic-selector" aria-label="논제 선택"></div>
+    <div class="workspace">
+      <aside class="panel teams"><div class="panel-title"><strong>토론 팀</strong><small>5 teams</small></div><div class="team-list" id="team-list"></div><p class="note">한 팀에 토론자 4명씩<br>총 20명의 발언자를 관리합니다.</p></aside>
+      <section class="discussion">
+        <div class="discussion-head"><h2 id="team-heading">토론팀 A</h2><span class="status" id="save-status">자동 저장 준비</span></div>
+        <div class="speakers" id="speakers"></div>
+        <div class="panel notes">
+          <div class="notes-label"><span><span class="selected-name" id="selected-name">발언자를 선택하세요</span>의 발언 기록</span><span id="word-count">0자</span></div>
+          <textarea id="note-input" placeholder="위에서 발언자를 선택한 뒤, 마이크를 누르고 이야기해 보세요."></textarea>
+          <div class="voice-row"><button class="voice-button" id="voice-button" type="button" disabled><span class="mic" aria-hidden="true"></span><span id="voice-label">마이크로 입력</span></button><span class="voice-help" id="voice-help">발언자를 선택하면 음성 입력을 시작할 수 있습니다.</span></div>
+        </div>
+      </section>
+    </div>
+    </section>
+    <section id="teacher-view" class="view" hidden>
+      <div class="panel teacher-lock" id="teacher-lock"><h2>교사용 기록표</h2><p>교사 비밀번호를 입력하면 전체 토론 기록과 Excel 다운로드를 확인할 수 있습니다.</p><form class="password-row" id="teacher-login-form"><input class="password-input" id="teacher-password" type="password" autocomplete="current-password" placeholder="비밀번호 입력" aria-label="교사 비밀번호"><button class="action-button" type="submit">잠금 해제</button></form><p class="lock-error" id="lock-error" role="alert"></p></div>
+      <div class="teacher-content" id="teacher-content" hidden><div class="view-heading"><div><h2>교사용 기록표</h2><p>모든 팀의 발언 기록을 한 표에서 확인합니다. 다른 탭에서도 같은 기록을 볼 수 있습니다.</p></div><button class="action-button" id="export-button" type="button">Excel 파일로 다운로드</button></div><div class="panel table-wrap"><table class="teacher-table"><thead><tr><th>팀</th><th>논제</th><th>토론자</th><th>발언 기록</th></tr></thead><tbody id="teacher-table-body"></tbody></table></div></div>
+    </section>
+    <section id="presentation-view" class="view" hidden>
+      <div class="view-heading"><div><h2>토론팀 발표 자료</h2><p>팀별 발언 기록을 발표 순서에 맞춰 요약해 보여줍니다.</p></div><button class="action-button" id="print-button" type="button">발표 자료 인쇄</button></div>
+      <p class="presentation-team-label">발표할 팀 선택</p><div class="presentation-team-selector" id="presentation-team-selector" aria-label="발표 팀 선택"></div>
+      <div class="summary-grid single" id="summary-grid"></div>
+    </section>
+  </main>
+  <script>
+    const teamNames = ['A', 'B', 'C', 'D', 'E'];
+    const topicNames = ['1', '2', '3', '마무리 논제'];
+    const defaultNames = ['민서', '지우', '서준', '하윤'];
+    const state = { activeTeam: 0, activeTopic: 0, activeSpeaker: null, presentationTeam: 0, notes: {}, names: teamNames.map(() => [...defaultNames]) };
+    const teacherPasswordHash = '01d58c1ac3df6d023d869e50bf78e2f9185332c281f665fd53f6dbd7592df45e';
+    let teacherUnlocked = false;
+    const storageKey = 'reading-circle-notes-v1';
+    const savedState = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    if (savedState) {
+      state.names = teamNames.map((_, teamIndex) => Array.isArray(savedState.names?.[teamIndex]) ? savedState.names[teamIndex].slice(0, 4) : [...defaultNames]);
+      state.notes = Object.fromEntries(Object.entries(savedState.notes || {}).map(([key, value]) => key.split('-').length === 2 ? [`${key.split('-')[0]}-0-${key.split('-')[1]}`, value] : [key, value]));
+    }
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    const teamList = document.getElementById('team-list');
+    const topicSelector = document.getElementById('topic-selector');
+    const speakers = document.getElementById('speakers');
+    const heading = document.getElementById('team-heading');
+    const selectedName = document.getElementById('selected-name');
+    const noteInput = document.getElementById('note-input');
+    const wordCount = document.getElementById('word-count');
+    const voiceButton = document.getElementById('voice-button');
+    const voiceLabel = document.getElementById('voice-label');
+    const voiceHelp = document.getElementById('voice-help');
+    const saveStatus = document.getElementById('save-status');
+    const teacherTableBody = document.getElementById('teacher-table-body');
+    const summaryGrid = document.getElementById('summary-grid');
+    const presentationTeamSelector = document.getElementById('presentation-team-selector');
+    const teacherLock = document.getElementById('teacher-lock');
+    const teacherContent = document.getElementById('teacher-content');
+    const teacherLoginForm = document.getElementById('teacher-login-form');
+    const teacherPassword = document.getElementById('teacher-password');
+    const lockError = document.getElementById('lock-error');
+
+    function currentKey() { return state.activeSpeaker === null ? '' : `${state.activeTeam}-${state.activeTopic}-${state.activeSpeaker}`; }
+    function persist() { localStorage.setItem(storageKey, JSON.stringify({ names: state.names, notes: state.notes })); }
+    function renderTeams() { teamList.innerHTML = teamNames.map((name, index) => `<button class="team-button ${index === state.activeTeam ? 'active' : ''}" data-team="${index}"><span class="team-badge">${name}</span><span><strong>토론팀 ${name}</strong><small>토론자 4명</small></span></button>`).join(''); }
+    function renderTopics() { topicSelector.innerHTML = topicNames.map((topic, index) => `<button class="topic-button ${index === state.activeTopic ? 'active' : ''}" data-topic="${index}" type="button">${topic === '마무리 논제' ? topic : `논제 ${topic}`}</button>`).join(''); }
+    function renderSpeakers() {
+      heading.textContent = `토론팀 ${teamNames[state.activeTeam]}`;
+      speakers.innerHTML = state.names[state.activeTeam].map((name, index) => `<div class="speaker ${index === state.activeSpeaker ? 'selected' : ''}" data-speaker="${index}" role="button" tabindex="0"><span class="number">SPEAKER 0${index + 1}</span><input class="speaker-name" data-name="${index}" value="${escapeHtml(name)}" aria-label="토론자 ${index + 1} 이름" placeholder="이름 입력"></div>`).join('');
+      const hasSpeaker = state.activeSpeaker !== null;
+      selectedName.textContent = hasSpeaker ? state.names[state.activeTeam][state.activeSpeaker] || '이름을 입력하세요' : '발언자를 선택하세요';
+      noteInput.disabled = !hasSpeaker;
+      voiceButton.disabled = !hasSpeaker || !Recognition;
+      noteInput.value = hasSpeaker ? state.notes[currentKey()] || '' : '';
+      updateCount();
+      if (!Recognition) voiceHelp.textContent = '이 브라우저는 음성 입력을 지원하지 않습니다. 직접 입력해 주세요.';
+    }
+    function escapeHtml(value) { return value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character])); }
+    function updateCount() { wordCount.textContent = `${noteInput.value.length}자`; }
+    function renderTeacherTable() {
+      teacherTableBody.innerHTML = teamNames.flatMap((team, teamIndex) => topicNames.flatMap((topic, topicIndex) => state.names[teamIndex].map((name, speakerIndex) => { const note = state.notes[`${teamIndex}-${topicIndex}-${speakerIndex}`] || ''; return `<tr><td>토론팀 ${team}</td><td>${topic === '마무리 논제' ? topic : `논제 ${topic}`}</td><td>${escapeHtml(name || '이름 없음')}</td><td class="${note ? '' : 'empty-note'}">${escapeHtml(note || '아직 기록이 없습니다.')}</td></tr>`; }))).join('');
+    }
+    function summarize(note) {
+      const normalized = note.replace(/\s+/g, ' ').trim();
+      const sentences = normalized.match(/[^.!?。！？]+[.!?。！？]?/g) || [normalized];
+      const summary = sentences.slice(0, 2).join('').trim();
+      return summary.length > 180 ? `${summary.slice(0, 180).trim()}...` : summary;
+    }
+    function renderPresentation() {
+      presentationTeamSelector.innerHTML = teamNames.map((team, index) => `<button class="presentation-team-button ${index === state.presentationTeam ? 'active' : ''}" data-presentation-team="${index}" type="button">토론팀 ${team}</button>`).join('');
+      const teamIndex = state.presentationTeam;
+      const team = teamNames[teamIndex];
+      summaryGrid.innerHTML = (() => {
+        const topicSections = topicNames.map((topic, topicIndex) => { const speakersWithNotes = state.names[teamIndex].map((name, speakerIndex) => ({ name, note: state.notes[`${teamIndex}-${topicIndex}-${speakerIndex}`] || '' })).filter(item => item.note); if (!speakersWithNotes.length) return ''; return `<div class="summary-speaker"><strong>${topic === '마무리 논제' ? topic : `논제 ${topic}`}</strong>${speakersWithNotes.map(item => `<p><b>${escapeHtml(item.name || '이름 없음')}</b> ${escapeHtml(summarize(item.note))}</p>`).join('')}</div>`; }).join('');
+        const noteCount = topicNames.reduce((total, _, topicIndex) => total + state.names[teamIndex].filter((__, speakerIndex) => state.notes[`${teamIndex}-${topicIndex}-${speakerIndex}`]).length, 0);
+        return `<article class="summary-card"><h3>토론팀 ${team}<small>${noteCount}개 기록</small></h3>${topicSections || '<div class="summary-speaker"><p class="empty-note">아직 정리된 발언이 없습니다.</p></div>'}</article>`;
+      })();
+    }
+    function showView(viewId) {
+      document.querySelectorAll('.view').forEach(view => { view.hidden = view.id !== viewId; });
+      document.querySelectorAll('.view-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.view === viewId));
+      if (viewId === 'teacher-view' && teacherUnlocked) renderTeacherTable();
+      if (viewId === 'presentation-view') renderPresentation();
+    }
+    async function hashPassword(password) {
+      const data = new TextEncoder().encode(password);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+    function downloadExcel() {
+      const rows = [['팀', '논제', '토론자', '발언 기록']];
+      teamNames.forEach((team, teamIndex) => topicNames.forEach((topic, topicIndex) => state.names[teamIndex].forEach((name, speakerIndex) => rows.push([`토론팀 ${team}`, topic === '마무리 논제' ? topic : `논제 ${topic}`, name || '이름 없음', state.notes[`${teamIndex}-${topicIndex}-${speakerIndex}`] || '']))));
+      const csv = '\uFEFF' + rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const link = document.createElement('a'); link.href = url; link.download = `독서토론_발언기록_${new Date().toISOString().slice(0, 10)}.csv`; document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    function selectSpeaker(index) { state.activeSpeaker = index; renderSpeakers(); noteInput.focus(); }
+    function stopVoice() { if (recognition) recognition.stop(); voiceButton.classList.remove('listening'); voiceLabel.textContent = '마이크로 입력'; }
+    function startVoice() {
+      if (!Recognition || state.activeSpeaker === null) return;
+      if (voiceButton.classList.contains('listening')) { stopVoice(); return; }
+      recognition = new Recognition(); recognition.lang = 'ko-KR'; recognition.continuous = true; recognition.interimResults = true;
+      recognition.onstart = () => { voiceButton.classList.add('listening'); voiceLabel.textContent = '듣는 중...'; voiceHelp.textContent = '마이크 가까이에서 또렷하게 말씀해 주세요. 끝나면 버튼을 다시 눌러주세요.'; };
+      recognition.onresult = event => { let finalText = ''; for (let i = event.resultIndex; i < event.results.length; i++) { const text = event.results[i][0].transcript; if (event.results[i].isFinal) finalText += text; } if (finalText) { noteInput.value += (noteInput.value && !noteInput.value.endsWith(' ') ? ' ' : '') + finalText.trim(); state.notes[currentKey()] = noteInput.value; persist(); updateCount(); saveStatus.textContent = '방금 저장됨'; } };
+      recognition.onerror = event => { const messages = { 'not-allowed': '마이크 권한을 허용해 주세요. 주소창의 자물쇠 아이콘에서 마이크를 허용할 수 있습니다.', 'audio-capture': '사용할 수 있는 마이크가 없습니다. 마이크 연결을 확인해 주세요.', 'no-speech': '음성이 들리지 않았습니다. 마이크 가까이에서 다시 말씀해 주세요.', 'network': '음성 인식 서버에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.' }; voiceHelp.textContent = messages[event.error] || `음성 입력 오류(${event.error})입니다. 다시 시도해 주세요.`; stopVoice(); };
+      recognition.onend = () => { if (voiceButton.classList.contains('listening')) { voiceButton.classList.remove('listening'); voiceLabel.textContent = '마이크로 입력'; } };
+      const startRecognition = () => { try { recognition.start(); } catch (error) { voiceHelp.textContent = '음성 입력을 시작하지 못했습니다. Chrome에서 페이지를 다시 열고 마이크 권한을 허용해 주세요.'; } };
+      if (navigator.mediaDevices?.getUserMedia) navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => { stream.getTracks().forEach(track => track.stop()); startRecognition(); }).catch(() => { voiceHelp.textContent = '마이크 권한이 필요합니다. 브라우저에서 이 페이지의 마이크 사용을 허용해 주세요.'; });
+      else startRecognition();
+    }
+    teamList.addEventListener('click', event => { const button = event.target.closest('[data-team]'); if (!button) return; stopVoice(); state.activeTeam = Number(button.dataset.team); state.activeSpeaker = null; renderTeams(); renderSpeakers(); });
+    topicSelector.addEventListener('click', event => { const button = event.target.closest('[data-topic]'); if (!button) return; stopVoice(); state.activeTopic = Number(button.dataset.topic); state.activeSpeaker = null; renderTopics(); renderSpeakers(); });
+    speakers.addEventListener('click', event => { const card = event.target.closest('[data-speaker]'); if (card && !event.target.matches('.speaker-name')) selectSpeaker(Number(card.dataset.speaker)); });
+    speakers.addEventListener('keydown', event => { const card = event.target.closest('[data-speaker]'); if (card && !event.target.matches('.speaker-name') && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); selectSpeaker(Number(card.dataset.speaker)); } });
+    speakers.addEventListener('focusin', event => { if (!event.target.matches('.speaker-name')) return; const index = Number(event.target.dataset.name); state.activeSpeaker = index; document.querySelectorAll('.speaker').forEach((card, cardIndex) => card.classList.toggle('selected', cardIndex === index)); selectedName.textContent = state.names[state.activeTeam][index] || '이름을 입력하세요'; noteInput.disabled = false; voiceButton.disabled = !Recognition; noteInput.value = state.notes[currentKey()] || ''; updateCount(); });
+    speakers.addEventListener('input', event => { if (!event.target.matches('.speaker-name')) return; const index = Number(event.target.dataset.name); state.names[state.activeTeam][index] = event.target.value; if (state.activeSpeaker === index) selectedName.textContent = event.target.value || '이름을 입력하세요'; persist(); saveStatus.textContent = '이름 자동 저장됨'; });
+    noteInput.addEventListener('input', () => { if (state.activeSpeaker !== null) { state.notes[currentKey()] = noteInput.value; persist(); updateCount(); saveStatus.textContent = '자동 저장됨'; } });
+    document.querySelectorAll('.view-tab').forEach(tab => tab.addEventListener('click', () => showView(tab.dataset.view)));
+    teacherLoginForm.addEventListener('submit', async event => { event.preventDefault(); const isValid = (await hashPassword(teacherPassword.value)) === teacherPasswordHash; if (!isValid) { lockError.textContent = '비밀번호가 올바르지 않습니다.'; teacherPassword.select(); return; } teacherUnlocked = true; teacherLock.hidden = true; teacherContent.hidden = false; teacherPassword.value = ''; lockError.textContent = ''; renderTeacherTable(); });
+    presentationTeamSelector.addEventListener('click', event => { const button = event.target.closest('[data-presentation-team]'); if (!button) return; state.presentationTeam = Number(button.dataset.presentationTeam); renderPresentation(); });
+    document.getElementById('export-button').addEventListener('click', downloadExcel);
+    document.getElementById('print-button').addEventListener('click', () => window.print());
+    window.addEventListener('storage', event => { if (event.key !== storageKey || !event.newValue) return; const latest = JSON.parse(event.newValue); state.names = teamNames.map((_, teamIndex) => Array.isArray(latest.names?.[teamIndex]) ? latest.names[teamIndex].slice(0, 4) : [...defaultNames]); state.notes = latest.notes || {}; renderTeams(); renderSpeakers(); renderTeacherTable(); renderPresentation(); });
+    voiceButton.addEventListener('click', startVoice);
+    renderTeams(); renderTopics(); renderSpeakers(); renderTeacherTable(); renderPresentation();
+  </script>
+</body>
+</html>
